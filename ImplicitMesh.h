@@ -23,34 +23,35 @@
 
 class ImplicitMesh : public chai3d::cMesh
 {
-    //! A visible sphere that tracks the position of the proxy on the surface
-    chai3d::cShapeSphere m_projectedSphere;
-    
-    //! A pointer to the implicit function used to create this object
-    double (*m_surfaceFunction)(double, double, double);
-    chai3d::cVector3d (*m_gradientFunction)(double, double, double);
-    chai3d::cVector3d closestPointToSurface(chai3d::cVector3d);
+  //! A visible sphere that tracks the position of the proxy on the surface
+  chai3d::cShapeSphere m_projectedSphere;
+  
+  //! A pointer to the implicit function used to create this object
+  double (*m_surfaceFunction)(double, double, double);
+  chai3d::cVector3d (*m_gradientFunction)(double, double, double);
+  chai3d::cVector3d closestPointToSurface(chai3d::cVector3d);
+  chai3d::cVector3d closestPointToTangent();
 
 public:
-    ImplicitMesh();
-    virtual ~ImplicitMesh(); 
+  ImplicitMesh();
+  virtual ~ImplicitMesh(); 
 
-    double debugValue;
+  double debugValue;
 
-    //! Create a polygon mesh from an implicit surface function for visual rendering.
-    void createFromFunction(double (*f)(double, double, double),
-                            chai3d::cVector3d(*g)(double, double, double),
-                            chai3d::cVector3d a_lowerBound,
-                            chai3d::cVector3d a_upperBound,
-                            double a_granularity);
+  //! Create a polygon mesh from an implicit surface function for visual rendering.
+  void createFromFunction(double (*f)(double, double, double),
+                          chai3d::cVector3d(*g)(double, double, double),
+                          chai3d::cVector3d a_lowerBound,
+                          chai3d::cVector3d a_upperBound,
+                          double a_granularity);
 
-    //! Contains code for graphically rendering this object in OpenGL.
-    virtual void render(chai3d::cRenderOptions& a_options);
+  //! Contains code for graphically rendering this object in OpenGL.
+  virtual void render(chai3d::cRenderOptions& a_options);
 
-    //! Update the geometric relationship between the tool and the current object.
-    virtual void computeLocalInteraction(const chai3d::cVector3d& a_toolPos,
-                                         const chai3d::cVector3d& a_toolVel,
-                                         const unsigned int a_IDN);
+  //! Update the geometric relationship between the tool and the current object.
+  virtual void computeLocalInteraction(const chai3d::cVector3d& a_toolPos,
+                                       const chai3d::cVector3d& a_toolVel,
+                                       const unsigned int a_IDN);
 };
 
 #endif

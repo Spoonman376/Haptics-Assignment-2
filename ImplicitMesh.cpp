@@ -41,6 +41,11 @@ chai3d::cVector3d ImplicitMesh::closestPointToSurface(chai3d::cVector3d seed)
   return point;
 }
 
+chai3d::cVector3d ImplicitMesh::closestPointToTangent()
+{
+  
+}
+
 ImplicitMesh::ImplicitMesh()
     : m_surfaceFunction(0), m_projectedSphere(0.05)
 {

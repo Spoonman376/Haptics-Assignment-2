@@ -127,7 +127,12 @@ void close(void);
 // [CPSC.86] sample implicit function for a sphere
 double implicitSphere(double x, double y, double z)
 {
-    return x * x + y * y + z * z - 1;
+  return x * x + y * y + z * z - 1;
+}
+
+chai3d::cVector3d sphereGradient(double x, double y, double z)
+{
+  return chai3d::cVector3d(2 * x, 2 * y, 2 * z);
 }
 
 
@@ -353,7 +358,8 @@ int main(int argc, char* argv[])
 
     // generate a mesh for the implicit surface (inside a bounding box with
     // range -1.25 to 1.25, and a resolution of 0.05 units)
-    object->createFromFunction(implicitSphere, cVector3d(-1.25, -1.25, -1.25),
+    object->createFromFunction(implicitSphere, sphereGradient,
+                               cVector3d(-1.25, -1.25, -1.25),
                                cVector3d(1.25, 1.25, 1.25), 0.025);
 
     // the surface effect renders a spring force between the device and proxy
