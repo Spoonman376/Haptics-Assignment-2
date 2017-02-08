@@ -39,11 +39,10 @@ public:
 
     //! Create a polygon mesh from an implicit surface function for visual rendering.
     void createFromFunction(double (*f)(double, double, double),
+                            chai3d::cVector3d(*g)(double, double, double),
                             chai3d::cVector3d a_lowerBound,
                             chai3d::cVector3d a_upperBound,
                             double a_granularity);
-
-    void setGradient(chai3d::cVector3d(*f)(double, double, double));
 
     //! Contains code for graphically rendering this object in OpenGL.
     virtual void render(chai3d::cRenderOptions& a_options);

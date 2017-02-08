@@ -155,6 +155,7 @@ void ImplicitMesh::computeLocalInteraction(const cVector3d& a_toolPos,
     }
     else if (m_interactionInside) {
       
+      // find the closest point on the tangent plane
     }
 
     if (m_interactionInside && surfaceValue > 0) {
