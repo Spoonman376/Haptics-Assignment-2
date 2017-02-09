@@ -128,14 +128,17 @@ void close(void);
 double implicitSphere(double x, double y, double z)
 {
   
-  return x * x + y * y + z * z - 1;
+  //return x * x + y * y + z * z - 1;
 
-  // return 4 * z * z * z * z + 0.64 * (x * x + y * y - 4 * z * z);
+  return 4 * z * z * z * z + 0.64 * (x * x + y * y - 4 * z * z);
 }
 
 chai3d::cVector3d sphereGradient(double x, double y, double z)
 {
-  return chai3d::cVector3d(2 * x, 2 * y, 2 * z);
+//  return chai3d::cVector3d(2 * x, 2 * y, 2 * z);
+
+  return chai3d::cVector3d(2 * 0.64 * x, 2 * 0.64 * y, 16 * z * z * z - 8 * 0.64 * z);
+
 }
 
 

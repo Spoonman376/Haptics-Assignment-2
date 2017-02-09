@@ -163,6 +163,7 @@ void ImplicitMesh::computeLocalInteraction(const cVector3d& a_toolPos,
     else if (m_interactionInside) {
       chai3d::cVector3d delta(0,0,0);
 
+      int max = 0;
       do {
         // get the tangent plane 
         chai3d::cVector3d normal = m_gradientFunction(m_interactionPoint(0), m_interactionPoint(1), m_interactionPoint(2));
@@ -185,38 +186,42 @@ void ImplicitMesh::computeLocalInteraction(const cVector3d& a_toolPos,
           double forceNormal = vec * normal;
           double forcePerp = (vec - forceNormal * normal).length();
 
-          delta = closestPointToSurface(closestPointToTangent(a_toolPos)) - m_interactionPoint;
-          m_interactionPoint += delta;
+          double value = abs(forcePerp / forceNormal);
 
-          /*
+          //delta = closestPointToSurface(closestPointToTangent(a_toolPos)) - m_interactionPoint;
+          //m_interactionPoint += delta;
+
           // if the cursor is in motion on the object
           if (moving) {
             // 
-            if (forcePerp / forceNormal > mu_k) {
+            if (value > atan(mu_k)) {
               // find the closest point on the tangent plane and use to find the closest point on surface
               delta = closestPointToSurface(closestPointToTangent(a_toolPos)) - m_interactionPoint;
               m_interactionPoint += delta;
+              moving = true;
             }
             //
-            else if (forcePerp / forceNormal < mu_k * 0.99) {
+            else if (value < atan(mu_k) * 0.99) {
               moving = false;
+              std::cout << "heyo" << std::endl;
             }
           } 
           else {
-            if (forcePerp / forceNormal > mu_s) {
+            if (value > atan(mu_s)) {
               // find the closest point on the tangent plane and use to find the closest point on surface
               delta = closestPointToSurface(closestPointToTangent(a_toolPos)) - m_interactionPoint;
               m_interactionPoint += delta;
               moving = true;
 
             }
-            else if (forcePerp / forceNormal < mu_s * 0.99) {
+            else if (value < atan(mu_s) * 0.99) {
+              moving = false;
+
             }
           }
-          */
-
         }
-      } while (delta.length() > 0.0001);
+        ++max;
+      } while (delta.length() > 0.0001 && max < 10);
     }
 
     if (!m_interactionInside) {
