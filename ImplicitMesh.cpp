@@ -36,14 +36,27 @@ chai3d::cVector3d ImplicitMesh::closestPointToSurface(chai3d::cVector3d seed)
     
     point += delta;
 
-  } while (delta.length() < 0.0001);
+  } while (delta.length() > 0.0001);
 
   return point;
 }
 
-chai3d::cVector3d ImplicitMesh::closestPointToTangent()
+chai3d::cVector3d ImplicitMesh::closestPointToTangent(chai3d::cVector3d position)
 {
+  // get the plane normal
+  chai3d::cVector3d point = m_interactionPoint;
+  chai3d::cVector3d normal = m_gradientFunction(point(0), point(1), point(2));
+  normal.normalize();
+
+  // Possibly fix the normal ?
+
+  // find the closest point
   
+  point = position - point;
+
+  double distance = point * normal;
+
+  return position - normal * distance;
 }
 
 ImplicitMesh::ImplicitMesh()
@@ -136,18 +149,6 @@ void ImplicitMesh::computeLocalInteraction(const cVector3d& a_toolPos,
     double mu_s = m_material->getStaticFriction();
     double mu_k = m_material->getDynamicFriction();
     
-    
-    // m_interactionProjectedPoint is the "proxy" point on the surface
-    // that the rendering algorithm tracks.  It should be equal to the
-    // tool position when the tool is not in contact with the object.
-    //m_interactionPoint = a_toolPos;
-
-    // m_interactionInside should be set to true when the tool is in contact
-    // with the object.
-    // m_interactionInside = false;
-
-
-
     double surfaceValue = m_surfaceFunction(a_toolPos.x(), a_toolPos.y(), a_toolPos.z());
     debugValue = surfaceValue;
 
@@ -156,20 +157,71 @@ void ImplicitMesh::computeLocalInteraction(const cVector3d& a_toolPos,
 
       // find the closest point
       m_interactionPoint = closestPointToSurface(a_toolPos);
-      
+      oldTangentNormal = m_gradientFunction(m_interactionPoint(0), m_interactionPoint(1), m_interactionPoint(2));
+      oldTangentNormal.normalize();
     }
     else if (m_interactionInside) {
-      
-      // find the closest point on the tangent plane
-    }
+      chai3d::cVector3d delta(0,0,0);
 
-    if (m_interactionInside && surfaceValue > 0) {
-      m_interactionInside = false;
+      do {
+        // get the tangent plane 
+        chai3d::cVector3d normal = m_gradientFunction(m_interactionPoint(0), m_interactionPoint(1), m_interactionPoint(2));
+        normal.normalize();
+
+        // fix the normal
+        if (normal * oldTangentNormal < 0)
+          normal *= -1;
+
+        oldTangentNormal = normal;
+
+        // The device has left the object
+        if ((a_toolPos - m_interactionPoint) * normal > 0) {
+          m_interactionInside = false;
+        }
+        else {
+          // find the vector between the tool and the interation point
+          chai3d::cVector3d vec = a_toolPos - m_interactionPoint;
+          
+          double forceNormal = vec * normal;
+          double forcePerp = (vec - forceNormal * normal).length();
+
+          delta = closestPointToSurface(closestPointToTangent(a_toolPos)) - m_interactionPoint;
+          m_interactionPoint += delta;
+
+          /*
+          // if the cursor is in motion on the object
+          if (moving) {
+            // 
+            if (forcePerp / forceNormal > mu_k) {
+              // find the closest point on the tangent plane and use to find the closest point on surface
+              delta = closestPointToSurface(closestPointToTangent(a_toolPos)) - m_interactionPoint;
+              m_interactionPoint += delta;
+            }
+            //
+            else if (forcePerp / forceNormal < mu_k * 0.99) {
+              moving = false;
+            }
+          } 
+          else {
+            if (forcePerp / forceNormal > mu_s) {
+              // find the closest point on the tangent plane and use to find the closest point on surface
+              delta = closestPointToSurface(closestPointToTangent(a_toolPos)) - m_interactionPoint;
+              m_interactionPoint += delta;
+              moving = true;
+
+            }
+            else if (forcePerp / forceNormal < mu_s * 0.99) {
+            }
+          }
+          */
+
+        }
+      } while (delta.length() > 0.0001);
     }
 
     if (!m_interactionInside) {
       m_interactionPoint = a_toolPos;
+      oldTangentNormal = chai3d::cVector3d(0, 0, 0);
     }
-
 
 }

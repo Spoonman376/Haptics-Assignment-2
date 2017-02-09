@@ -28,9 +28,21 @@ class ImplicitMesh : public chai3d::cMesh
   
   //! A pointer to the implicit function used to create this object
   double (*m_surfaceFunction)(double, double, double);
+
+  // A pointer to the implicit function used to calculate the gradient
   chai3d::cVector3d (*m_gradientFunction)(double, double, double);
+
+  // Get the closest point to the surface
   chai3d::cVector3d closestPointToSurface(chai3d::cVector3d);
-  chai3d::cVector3d closestPointToTangent();
+
+  // Get the closest point to the tangent of the surface
+  chai3d::cVector3d closestPointToTangent(chai3d::cVector3d);
+
+  // Store the old tangent normal
+  chai3d::cVector3d oldTangentNormal = chai3d::cVector3d(0,0,0);
+
+  // Store if the device is moving on the surface of the object
+  bool moving = false;
 
 public:
   ImplicitMesh();

@@ -127,7 +127,10 @@ void close(void);
 // [CPSC.86] sample implicit function for a sphere
 double implicitSphere(double x, double y, double z)
 {
+  
   return x * x + y * y + z * z - 1;
+
+  // return 4 * z * z * z * z + 0.64 * (x * x + y * y - 4 * z * z);
 }
 
 chai3d::cVector3d sphereGradient(double x, double y, double z)
