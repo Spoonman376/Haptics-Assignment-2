@@ -77,6 +77,7 @@ ImplicitMesh *sphere;
 ImplicitMesh *heart;
 ImplicitMesh *cube;
 ImplicitMesh *shape;
+ImplicitMesh *plane;
 
 // flag to indicate if the haptic simulation currently running
 bool simulationRunning = false;
@@ -140,6 +141,16 @@ chai3d::cVector3d sphereGradient(double x, double y, double z)
   return chai3d::cVector3d(2 * x, 2 * y, 2 * z);
 }     
 
+double implicitPlane(double x, double y, double z)
+{
+  return x;
+}
+
+chai3d::cVector3d planeGradient(double x, double y, double z)
+{
+  return chai3d::cVector3d(1,0,0);
+}
+
 
 double implicitHeart(double x, double y, double z)
 {
@@ -177,7 +188,14 @@ chai3d::cVector3d shapeGradient(double x, double y, double z)
 }
 
 
-
+void setFrictions(double s, double k)
+{
+  sphere->setFriction(s, k);
+  heart->setFriction(s, k);
+  cube->setFriction(s, k);
+  shape->setFriction(s, k);
+  plane->setFriction(s, k);
+}
 
 //==============================================================================
 /*
@@ -206,6 +224,7 @@ int main(int argc, char* argv[])
     cout << "Copyright 2003-2017" << endl;
     cout << "-----------------------------------" << endl << endl << endl;
     cout << "Keyboard Options:" << endl << endl;
+    cout << "[1-5] - Switch bewteen scenes" << endl;
     cout << "[f] - Enable/Disable full screen mode" << endl;
     cout << "[m] - Enable/Disable vertical mirroring" << endl;
     cout << "[q] - Exit application" << endl;
@@ -401,6 +420,7 @@ int main(int argc, char* argv[])
     heart = new ImplicitMesh();
     cube = new ImplicitMesh();
     shape = new ImplicitMesh();
+    plane = new ImplicitMesh();
 
     // generate a mesh for the implicit surface (inside a bounding box with
     // range -1.25 to 1.25, and a resolution of 0.05 units)
@@ -421,6 +441,10 @@ int main(int argc, char* argv[])
                               cVector3d(1.25, 1.25, 1.25), 0.025);
 
 
+    plane->createFromFunction(implicitPlane, planeGradient,
+                              cVector3d(-1.25, -1.25, -1.25),
+                              cVector3d(1.25, 1.25, 1.25), 0.025);
+
     // the surface effect renders a spring force between the device and proxy
     // points with the given stiffness in the material
     sphere->addEffect(new cEffectSurface(sphere));
@@ -435,17 +459,18 @@ int main(int argc, char* argv[])
     shape->addEffect(new cEffectSurface(shape));
     shape->m_material->setStiffness(0.75 * maxStiffness);
 
+    plane->addEffect(new cEffectSurface(plane));
+    plane->m_material->setStiffness(0.75 * maxStiffness);
+
     // give the surface a nice red colour
     sphere->m_material->setRedDark();
     heart->m_material->setRedDark();
     cube->m_material->setRedDark();
     shape->m_material->setRedDark();
+    plane->m_material->setRedDark();
 
     // add some friction to the object's material
-    sphere->setFriction(0.5, 0.3);
-    heart->setFriction(0.5, 0.3);
-    cube->setFriction(0.5, 0.3);
-    shape->setFriction(0.5, 0.3);
+    setFrictions(0, 0);
 
     world->addChild(sphere);
 
@@ -612,6 +637,24 @@ void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, 
       world->clearAllChildren();
       world->addChild(tool);
       world->addChild(shape);
+    }
+    else  if (a_key == GLFW_KEY_5)
+    {
+      world->clearAllChildren();
+      world->addChild(tool);
+      world->addChild(plane);
+    }
+    else if (a_key == GLFW_KEY_A)
+    {
+      setFrictions(0, 0);
+    }
+    else if (a_key == GLFW_KEY_S)
+    {
+      setFrictions(0.3, 0.2);
+    }
+    else if (a_key == GLFW_KEY_D)
+    {
+      setFrictions(0.7, 0.5);
     }
 }
 
