@@ -73,6 +73,11 @@ cLabel* labelRates;
 // a virtual tool representing the haptic device in the scene
 cToolCursor* tool;
 
+ImplicitMesh *sphere;
+ImplicitMesh *heart;
+ImplicitMesh *cube;
+ImplicitMesh *shape;
+
 // flag to indicate if the haptic simulation currently running
 bool simulationRunning = false;
 
@@ -127,19 +132,51 @@ void close(void);
 // [CPSC.86] sample implicit function for a sphere
 double implicitSphere(double x, double y, double z)
 {
-  
-  //return x * x + y * y + z * z - 1;
-
-  return 4 * z * z * z * z + 0.64 * (x * x + y * y - 4 * z * z);
+  return x * x + y * y + z * z - 1;
 }
 
 chai3d::cVector3d sphereGradient(double x, double y, double z)
 {
-//  return chai3d::cVector3d(2 * x, 2 * y, 2 * z);
+  return chai3d::cVector3d(2 * x, 2 * y, 2 * z);
+}     
 
-  return chai3d::cVector3d(2 * 0.64 * x, 2 * 0.64 * y, 16 * z * z * z - 8 * 0.64 * z);
 
+double implicitHeart(double x, double y, double z)
+{
+  return pow(2 * x * x + y * y + z * z - 1, 3) - (0.1 * x * x + y *  y) * z * z * z;
 }
+
+chai3d::cVector3d heartGradient(double x, double y, double z)
+{
+  return chai3d::cVector3d(12 * x * pow(2 * x * x + y * y + z * z - 1, 2) - 0.2 * x * z * z * z,
+                           6 * y * pow(2 * x * x + y * y + z * z - 1, 2) - 2 * y * z * z * z,
+                           6 * z * pow(2 * x * x + y * y + z * z - 1, 2) - 3 * z * z * (0.1 * x * x + y * y));
+}
+
+double implicitWhiffleCube(double x, double y, double z)
+{
+  return pow(pow(x, 8) + pow(y, 8) + pow(z, 8), 8) + pow(x * x + y * y + z * z - 0.44, -8) - 1;
+}
+
+chai3d::cVector3d whiffleCubeGradient(double x, double y, double z)
+{
+  return chai3d::cVector3d(64 * pow(x, 7) * pow(pow(x, 8) + pow(y, 8) + pow(z, 8), 7) - 16 * x * pow(x * x + y * y + z * z - 0.44, -9),
+                           64 * pow(y, 7) * pow(pow(x, 8) + pow(y, 8) + pow(z, 8), 7) - 16 * y * pow(x * x + y * y + z * z - 0.44, -9),
+                           64 * pow(z, 7) * pow(pow(x, 8) + pow(y, 8) + pow(z, 8), 7) - 16 * z * pow(x * x + y * y + z * z - 0.44, -9));
+}
+
+
+double implicitShape(double x, double y, double z)
+{
+  return 4 * z * z * z * z + 0.64 * (x * x + y * y - 4 * z * z);
+}
+
+chai3d::cVector3d shapeGradient(double x, double y, double z)
+{
+  return chai3d::cVector3d(2 * 0.64 * x, 2 * 0.64 * y, 16 * z * z * z - 8 * 0.64 * z);
+}
+
+
 
 
 //==============================================================================
@@ -360,26 +397,57 @@ int main(int argc, char* argv[])
     /////////////////////////////////////////////////////////////////////////
 
     // create the object representing the implicit surface
-    ImplicitMesh *object = new ImplicitMesh();
+    sphere = new ImplicitMesh();
+    heart = new ImplicitMesh();
+    cube = new ImplicitMesh();
+    shape = new ImplicitMesh();
 
     // generate a mesh for the implicit surface (inside a bounding box with
     // range -1.25 to 1.25, and a resolution of 0.05 units)
-    object->createFromFunction(implicitSphere, sphereGradient,
+    sphere->createFromFunction(implicitSphere, sphereGradient,
                                cVector3d(-1.25, -1.25, -1.25),
                                cVector3d(1.25, 1.25, 1.25), 0.025);
 
+    heart->createFromFunction(implicitHeart, heartGradient,
+                              cVector3d(-1.25, -1.25, -1.25),
+                              cVector3d(1.25, 1.25, 1.25), 0.025);
+
+    cube->createFromFunction(implicitWhiffleCube, whiffleCubeGradient,
+                             cVector3d(-1.25, -1.25, -1.25),
+                             cVector3d(1.25, 1.25, 1.25), 0.025);
+
+    shape->createFromFunction(implicitShape, shapeGradient,
+                              cVector3d(-1.25, -1.25, -1.25),
+                              cVector3d(1.25, 1.25, 1.25), 0.025);
+
+
     // the surface effect renders a spring force between the device and proxy
     // points with the given stiffness in the material
-    object->addEffect(new cEffectSurface(object));
-    object->m_material->setStiffness(0.5 * maxStiffness);
+    sphere->addEffect(new cEffectSurface(sphere));
+    sphere->m_material->setStiffness(0.75 * maxStiffness);
+
+    heart->addEffect(new cEffectSurface(heart));
+    heart->m_material->setStiffness(0.75 * maxStiffness);
+
+    cube->addEffect(new cEffectSurface(cube));
+    cube->m_material->setStiffness(0.75 * maxStiffness);
+
+    shape->addEffect(new cEffectSurface(shape));
+    shape->m_material->setStiffness(0.75 * maxStiffness);
 
     // give the surface a nice red colour
-    object->m_material->setRedDark();
+    sphere->m_material->setRedDark();
+    heart->m_material->setRedDark();
+    cube->m_material->setRedDark();
+    shape->m_material->setRedDark();
 
     // add some friction to the object's material
-    object->setFriction(0.5, 0.3);
+    sphere->setFriction(0.5, 0.3);
+    heart->setFriction(0.5, 0.3);
+    cube->setFriction(0.5, 0.3);
+    shape->setFriction(0.5, 0.3);
 
-    world->addChild(object);
+    world->addChild(sphere);
 
 
     //--------------------------------------------------------------------------
@@ -518,6 +586,32 @@ void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, 
     {
         mirroredDisplay = !mirroredDisplay;
         camera->setMirrorVertical(mirroredDisplay);
+    }
+
+    else  if (a_key == GLFW_KEY_1)
+    {
+      world->clearAllChildren();
+      world->addChild(tool);
+      world->addChild(sphere);
+    }
+
+    else  if (a_key == GLFW_KEY_2)
+    {
+      world->clearAllChildren();
+      world->addChild(tool);
+      world->addChild(heart);
+    }
+    else  if (a_key == GLFW_KEY_3)
+    {
+      world->clearAllChildren();
+      world->addChild(tool);
+      world->addChild(cube);
+    }
+    else  if (a_key == GLFW_KEY_4)
+    {
+      world->clearAllChildren();
+      world->addChild(tool);
+      world->addChild(shape);
     }
 }
 
